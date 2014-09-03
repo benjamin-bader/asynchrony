@@ -120,36 +120,7 @@ namespace Asynchrony.Collections
             Assert.That(enqueueTask.IsCompleted);
         }
 
-        [Test]
-        public async Task TestBlockingDequeueWait()
-        {
-            var queue = new AsyncQueue<int>();
-
-            var started = new TaskCompletionSource<bool>();
-            var finished = false;
-
-            Func<Task<int>> dequeue = async () =>
-            {
-                started.SetResult(true);
-                var element = await queue.DequeueAsync();
-                finished = true;
-                return element;
-            };
-
-            Func<Task<int>> enqueue = async () =>
-            {
-                var task = Task.Run(dequeue);
-                await started.Task;
-                Assert.That(finished, Is.False);
-                Task.Run(() => queue.TryEnqueue(1));
-                var result = await task;
-                Assert.That(finished, Is.True);
-                return result;
-            };
-
-            var dequeuedResult = await Task.Run(enqueue);
-            Assert.That(dequeuedResult, Is.EqualTo(1));
-        }
+        // TestBlockingDequeueWait -> AsyncQueueTestsThatRunOnMono
 
         [Test]
         public void TestTryDequeue()
@@ -196,33 +167,7 @@ namespace Asynchrony.Collections
             Assert.That(result, Is.EqualTo(2));
         }
 
-        [Test]
-        public async Task TestBlockingEnqueueWait()
-        {
-            var queue = new AsyncQueue<int>(1);
-            var started = new TaskCompletionSource<bool>();
-            var finished = false;
-
-            Func<Task> enqueue = async () =>
-            {
-                started.SetResult(true);
-                await queue.EnqueueAsync(2);
-                await queue.EnqueueAsync(3);
-                finished = true;
-            };
-
-            Func<Task> dequeue = async () =>
-            {
-                var enqueueTask = Task.Run(enqueue);
-                await started.Task;
-                Assert.That(finished, Is.False);
-                Task.Run(async () => await queue.DequeueAsync());
-                await enqueueTask;
-                Assert.That(finished, Is.True);
-            };
-
-            await dequeue();
-        }
+        //TestBlockingEnqueueWait() -> AsyncQueueTestsThatRunOnMono
 
         [Test]
         public async Task TestTryEnqueue()
@@ -238,16 +183,6 @@ namespace Asynchrony.Collections
             var queue = new AsyncQueue<int>(1);
             queue.TryEnqueue(2);
             Assert.That(queue.TryEnqueue(3), Is.False);
-        }
-
-        private Task<T> Defer<T>(Task<T> task, TaskScheduler scheduler = null)
-        {
-            return Task<T>.Factory.StartNew(
-                t => ((Task<T>) t).Result,
-                task,
-                CancellationToken.None,
-                TaskCreationOptions.PreferFairness,
-                scheduler ?? TaskScheduler.Current);
         }
     }
 }

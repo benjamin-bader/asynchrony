@@ -19,8 +19,11 @@ Global
 		{0DCF1C9D-5731-4CDD-9D60-DDE786E146E5}.Release|Any CPU.Build.0 = Release|Any CPU
 		{70E21CE3-7178-43E2-BF47-0AF933C0544C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{70E21CE3-7178-43E2-BF47-0AF933C0544C}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{70E21CE3-7178-43E2-BF47-0AF933C0544C}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{70E21CE3-7178-43E2-BF47-0AF933C0544C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{70E21CE3-7178-43E2-BF47-0AF933C0544C}.Release|Any CPU.ActiveCfg = Debug|Any CPU
+		{70E21CE3-7178-43E2-BF47-0AF933C0544C}.Release|Any CPU.Build.0 = Debug|Any CPU
+	EndGlobalSection
+	GlobalSection(MonoDevelopProperties) = preSolution
+		StartupItem = Asynchrony\Asynchrony.csproj
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
