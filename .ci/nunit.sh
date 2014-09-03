@@ -1,5 +1,7 @@
 #!/bin/sh -x
 
+# Just a script to run unit tests
+
 nuget install NUnit.Runners -Version 2.6.3 -o packages
 
 runTest() {
