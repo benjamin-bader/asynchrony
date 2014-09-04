@@ -43,6 +43,12 @@ namespace Asynchrony.Collections
         // Points to the next empty slot in the queue
         private int tail = 0;
 
+        // Visible for testing
+        internal int Capacity
+        {
+            get { return queue.Length; }
+        }
+
         /// <summary>
         /// Creates a new instance of <see cref="AsyncPriorityQueue&lt;TElement&gt;"/>.
         /// </summary>
@@ -101,7 +107,8 @@ namespace Asynchrony.Collections
             queue[0] = queue[tail];
             queue[tail] = default(TElement);
 
-            SiftDown(0); // TODO remember how to do this
+            SiftDown(0);
+            ShrinkIfNeeded();
 
             return element;
         }
@@ -113,7 +120,7 @@ namespace Asynchrony.Collections
                 return;
             }
 
-            var n = tail - 1;
+            var n = tail;
             n |= n >> 1;
             n |= n >> 2;
             n |= n >> 4;
@@ -124,6 +131,17 @@ namespace Asynchrony.Collections
             var newArray = new TElement[n];
             Array.Copy(queue, 0, newArray, 0, tail);
             queue = newArray;
+        }
+
+        private void ShrinkIfNeeded()
+        {
+            var halfLength = queue.Length / 2;
+            if (queue.Length == DefaultCapacity || tail >= halfLength)
+            {
+                return;
+            }
+
+            Array.Resize(ref queue, halfLength);
         }
 
         private void SiftUp(int index)

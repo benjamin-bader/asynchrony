@@ -39,11 +39,44 @@ namespace Asynchrony.Collections
         }
 
         [Test]
-        [ExpectedException(typeof(ArgumentException))]
+        public void TestQueueGrowth()
+        {
+            var queue = new AsyncPriorityQueue<int>();
+            var initialCapacity = queue.Capacity;
+
+            for (var i = 0; i <= initialCapacity; ++i)
+            {
+                queue.TryEnqueue(i);
+            }
+
+            Assert.That(queue.Capacity, Is.GreaterThan(initialCapacity));
+        }
+
+        [Test]
+        public void TestQueueShrinking()
+        {
+            var queue = new AsyncPriorityQueue<int>();
+            var initialCapacity = queue.Capacity;
+
+            for (var i = 0; i <= initialCapacity; ++i)
+            {
+                queue.TryEnqueue(i);
+            }
+
+            Assert.That(queue.Capacity, Is.GreaterThan(initialCapacity));
+
+            while (!queue.IsEmpty)
+            {
+                queue.DequeueNow();
+            }
+
+            Assert.That(queue.Capacity, Is.EqualTo(initialCapacity));
+        }
+
+        [Test, ExpectedException(typeof(ArgumentException))]
         public void TestComparableDetection()
         {
             new AsyncPriorityQueue<object>();
-            Assert.Fail("Expected an ArgumentException when creating a queue without an IComparer for a non-comparable type.");
         }
 
         [Test]

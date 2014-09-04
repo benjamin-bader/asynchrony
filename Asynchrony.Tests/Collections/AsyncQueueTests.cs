@@ -142,6 +142,20 @@ namespace Asynchrony.Collections
             Assert.That(queue.TryDequeue(out result), Is.False);
         }
 
+        [Test]
+        public void TestDequeueNowWhenQueueHasItems()
+        {
+            var queue = new AsyncQueue<int>();
+            queue.TryEnqueue(2);
+            Assert.That(queue.DequeueNow(), Is.EqualTo(2));
+        }
+
+        [Test, ExpectedException(typeof(InvalidOperationException))]
+        public void TestDequeueNowWhenQueueIsEmpty()
+        {
+            new AsyncQueue<int>().DequeueNow();
+        }
+
         //
         // Enqueue tests
         //

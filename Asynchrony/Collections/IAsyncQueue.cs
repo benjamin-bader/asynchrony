@@ -105,5 +105,17 @@ namespace Asynchrony.Collections
         /// Thrown when the queue has been disposed.
         /// </exception>
         bool TryDequeue(out TElement element);
+
+        /// <summary>
+        /// Dequeues an element immediately, without waiting.  If no elements
+        /// are available, an exception is thrown.
+        /// </summary>
+        /// <returns>
+        /// Returns the next element in the queue.
+        /// </returns>
+        /// <exception cref="InvalidOperationException">
+        /// Thrown when the queue is empty.
+        /// </exception>
+        TElement DequeueNow();
     }
 }

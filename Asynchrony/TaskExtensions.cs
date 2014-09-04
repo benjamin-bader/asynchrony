@@ -18,8 +18,39 @@ using System.Threading.Tasks;
 
 namespace Asynchrony
 {
+    /// <summary>
+    /// There is no non-generic TaskCompletionSource, so we have to use the generic
+    /// version even when there is no real result to provide.
+    ///
+    /// We could just use TaskCompletionSource&lt;bool&gt;, but callers could downcast
+    /// the result to Task&lt;bool&gt; and make assumptions about the value therein.
+    ///
+    /// By using an internal type as the task result, we prevent any but the most
+    /// determined of reflectors from trying to do stupid things.
+    /// </summary>
+    internal enum NonCastable : byte
+    {
+        NobodyCanDowncastSetterTasksWithThisCleverScheme
+    }
+
     internal static class TaskExtensions
     {
+        /// <summary>
+        /// A singleton <see cref="Task"/> that is already completed.
+        /// </summary>
+        /// <remarks>
+        /// Intended for use when an operation is completed without yielding
+        /// and a non-value-bearing result is needed.
+        /// </remarks>
+        internal static readonly Task CompletedTask;
+
+        static TaskExtensions()
+        {
+            var tcs = new TaskCompletionSource<NonCastable>();
+            tcs.SetResult(NonCastable.NobodyCanDowncastSetterTasksWithThisCleverScheme);
+            CompletedTask = tcs.Task;
+        }
+
         public static async Task WithCancellation(this Task task, CancellationToken token)
         {
             var tcs = new TaskCompletionSource<bool>();

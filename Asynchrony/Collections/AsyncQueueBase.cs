@@ -39,30 +39,8 @@ namespace Asynchrony.Collections
     /// </typeparam>
     public abstract class AsyncQueueBase<TElement> : IAsyncQueue<TElement>
     {
-        /// <summary>
-        /// There is no non-generic TaskCompletionSource, so we have to use the generic
-        /// version even when there is no real result to provide.
-        /// 
-        /// We could just use TaskCompletionSource&lt;bool&gt;, but callers could downcast
-        /// the result to Task&lt;bool&gt; and make assumptions about the value therein.
-        /// 
-        /// By using a private type as the task result, we prevent any but the most determined
-        /// reflectors from trying to do stupid things.
-        /// </summary>
-        private enum NonCastable : byte
-        {
-            NobodyCanDowncastSetterTasksWithThisCleverScheme
-        }
-
-        // ReSharper disable once StaticFieldInGenericType
-        private static readonly Task Complete;
-
-        static AsyncQueueBase()
-        {
-            var tcs = new TaskCompletionSource<NonCastable>();
-            tcs.SetResult(NonCastable.NobodyCanDowncastSetterTasksWithThisCleverScheme);
-            Complete = tcs.Task;
-        }
+        private const int True = 1;
+        private const int False = 0;
 
         private readonly Queue<TaskCompletionSource<TElement>> getters
             = new Queue<TaskCompletionSource<TElement>>();
@@ -136,7 +114,7 @@ namespace Asynchrony.Collections
 
                     getter = getters.Dequeue();
 
-                    result = Complete;
+                    result = TaskExtensions.CompletedTask;
                 }
                 else if (IsFull)
                 {
@@ -147,14 +125,13 @@ namespace Asynchrony.Collections
                 else
                 {
                     EnqueueCore(element);
-                    result = Complete;
+                    result = TaskExtensions.CompletedTask;
                 }
             }
 
             if (getter != null)
             {
                 SetResultAsync(getter, element);
-                //getter.TrySetResult(element);
             }
 
             return result;
@@ -186,7 +163,6 @@ namespace Asynchrony.Collections
             if (getter != null)
             {
                 SetResultAsync(getter, element);
-                //getter.TrySetResult(element);
             }
 
             return didEnqueue;
@@ -210,6 +186,8 @@ namespace Asynchrony.Collections
 
                     result = Task.FromResult(DequeueCore());
                     EnqueueCore(setterAndItem.Item2);
+
+                    // Set the result outside of the lock
                 }
                 else if (IsEmpty)
                 {
@@ -224,7 +202,6 @@ namespace Asynchrony.Collections
             }
 
             SetResultAsync(setter, NonCastable.NobodyCanDowncastSetterTasksWithThisCleverScheme);
-            //setter.TrySetResult(NonCastable.NobodyCanDowncastSetterTasksWithThisCleverScheme);
             return result;
         }
 
@@ -260,10 +237,18 @@ namespace Asynchrony.Collections
                 }
             }
 
-            // If we're here, we have a result to set.
             SetResultAsync(setter, NonCastable.NobodyCanDowncastSetterTasksWithThisCleverScheme);
-            //setter.TrySetResult(NonCastable.NobodyCanDowncastSetterTasksWithThisCleverScheme);
             return true;
+        }
+
+        public TElement DequeueNow()
+        {
+            TElement result;
+            if (!TryDequeue(out result))
+            {
+                throw new InvalidOperationException("Cannot dequeue from an empty queue");
+            }
+            return result;
         }
 
         public void Dispose()
@@ -274,7 +259,7 @@ namespace Asynchrony.Collections
 
         protected virtual void Dispose(bool disposing)
         {
-            if (Interlocked.CompareExchange(ref disposed, 1, 0) != 0)
+            if (Interlocked.CompareExchange(ref disposed, True, False) != False)
             {
                 return;
             }
@@ -389,7 +374,7 @@ namespace Asynchrony.Collections
         {
             // Non-volatile read of an int is safe if it is only set via Interlocked.* methods,
             // which this one is.
-            if (disposed == 1)
+            if (disposed == True)
             {
                 throw new ObjectDisposedException(GetType().FullName);
             }
