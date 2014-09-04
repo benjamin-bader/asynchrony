@@ -1,6 +1,8 @@
 Asynchrony
 ==========
 
+[![Build Status](https://travis-ci.org/benjamin-bader/asynchrony.svg?branch=master)](https://travis-ci.org/benjamin-bader/asynchrony)
+
 Asynchrony is a collection of tools for async-friendly coding in C#
 on Xamarin, WinRT, native .NET, and Windows Phone Silverlight.
 
