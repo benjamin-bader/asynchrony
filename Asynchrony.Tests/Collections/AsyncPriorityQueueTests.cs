@@ -103,6 +103,25 @@ namespace Asynchrony.Collections
             Assert.That(await queue.DequeueAsync(), Is.EqualTo(7));
         }
 
+        [Test]
+        public async Task TestBoundedQueueDoesNotGrow()
+        {
+            var queue = new AsyncPriorityQueue<int>(3);
+
+            queue.TryEnqueue(3);
+            queue.TryEnqueue(2);
+            queue.TryEnqueue(1);
+
+            var task = queue.EnqueueAsync(0);
+
+            Assert.That(task.IsCompleted, Is.False);
+            Assert.That(await queue.DequeueAsync(), Is.EqualTo(1));
+
+            await task;
+
+            Assert.That(await queue.DequeueAsync(), Is.EqualTo(0));
+        }
+
         private class ReverseComparer<T> : IComparer<T>
         {
             private readonly IComparer<T> inner;

@@ -14,10 +14,7 @@
 
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Reflection;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Asynchrony.Collections
 {
@@ -88,7 +85,19 @@ namespace Asynchrony.Collections
 
         protected override void EnqueueCore(TElement element)
         {
-            GrowIfNeeded();
+            if (tail == queue.Length)
+            {
+                AssertQueueNotBounded();
+
+                checked
+                {
+                    var size = queue.Length * 2;
+                    var q2 = new TElement[size];
+                    Array.Copy(queue, 0, q2, 0, queue.Length);
+                    queue = q2;
+                }
+            }
+
             queue[tail] = element;
             SiftUp(tail);
             ++tail;
@@ -111,26 +120,6 @@ namespace Asynchrony.Collections
             ShrinkIfNeeded();
 
             return element;
-        }
-
-        private void GrowIfNeeded()
-        {
-            if (tail < queue.Length)
-            {
-                return;
-            }
-
-            var n = tail;
-            n |= n >> 1;
-            n |= n >> 2;
-            n |= n >> 4;
-            n |= n >> 8;
-            n |= n >> 16;
-            ++n;
-
-            var newArray = new TElement[n];
-            Array.Copy(queue, 0, newArray, 0, tail);
-            queue = newArray;
         }
 
         private void ShrinkIfNeeded()

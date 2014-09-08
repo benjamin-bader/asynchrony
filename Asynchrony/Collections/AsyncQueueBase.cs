@@ -412,5 +412,23 @@ namespace Asynchrony.Collections
                 throw new Exception("Queue is not full, why are setters waiting");
             }
         }
+
+        [Conditional("DEBUG")]
+        protected void AssertQueueBounded()
+        {
+            if (!IsBounded)
+            {
+                throw new Exception("Queue is unbounded!");
+            }
+        }
+
+        [Conditional("DEBUG")]
+        protected void AssertQueueNotBounded()
+        {
+            if (IsBounded)
+            {
+                throw new Exception("Queue is bounded!");
+            }
+        }
     }
 }
