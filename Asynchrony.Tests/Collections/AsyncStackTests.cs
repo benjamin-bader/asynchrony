@@ -17,14 +17,13 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using NUnit.Framework;
+using Xunit;
 
 namespace Asynchrony.Collections
 {
-    [TestFixture]
     public class AsyncStackTests
     {
-        [Test]
+        [Fact]
         public async Task TestStackOrder()
         {
             var stack = new AsyncStack<int>();
@@ -32,9 +31,9 @@ namespace Asynchrony.Collections
             stack.TryEnqueue(2);
             stack.TryEnqueue(3);
 
-            Assert.That(await stack.DequeueAsync(), Is.EqualTo(3));
-            Assert.That(await stack.DequeueAsync(), Is.EqualTo(2));
-            Assert.That(await stack.DequeueAsync(), Is.EqualTo(1));
+            Assert.Equal(3, await stack.DequeueAsync());
+            Assert.Equal(2, await stack.DequeueAsync());
+            Assert.Equal(1, await stack.DequeueAsync());
         }
     }
 }

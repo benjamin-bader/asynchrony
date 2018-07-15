@@ -259,7 +259,8 @@ namespace Asynchrony.Collections
 
         protected virtual void Dispose(bool disposing)
         {
-            if (Interlocked.CompareExchange(ref disposed, True, False) != False)
+            bool alreadyDisposed = Interlocked.CompareExchange(ref disposed, True, False) == True;
+            if (alreadyDisposed)
             {
                 return;
             }
@@ -278,6 +279,16 @@ namespace Asynchrony.Collections
 
                 lock (QueueLock)
                 {
+                    foreach (var getter in getters)
+                    {
+                        getter.TrySetCanceled();
+                    }
+
+                    foreach (var setter in setters)
+                    {
+                        setter.Item1.TrySetCanceled();
+                    }
+
                     getters.Clear();
                     setters.Clear();
                 }

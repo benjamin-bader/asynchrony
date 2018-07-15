@@ -92,9 +92,7 @@ namespace Asynchrony.Collections
                 checked
                 {
                     var size = queue.Length * 2;
-                    var q2 = new TElement[size];
-                    Array.Copy(queue, 0, q2, 0, queue.Length);
-                    queue = q2;
+                    Array.Resize(ref queue, queue.Length * 2);
                 }
             }
 

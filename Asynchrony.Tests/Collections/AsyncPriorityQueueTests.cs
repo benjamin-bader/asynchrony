@@ -15,15 +15,15 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using FluentAssertions;
 using Moq;
-using NUnit.Framework;
+using Xunit;
 
 namespace Asynchrony.Collections
 {
-    [TestFixture]
     public class AsyncPriorityQueueTests
     {
-        [Test]
+        [Fact]
         public async Task TestPriorityOrder()
         {
             var queue = new AsyncPriorityQueue<int>();
@@ -32,13 +32,13 @@ namespace Asynchrony.Collections
             queue.TryEnqueue(9);
             queue.TryEnqueue(7);
 
-            Assert.That(await queue.DequeueAsync(), Is.EqualTo(7));
-            Assert.That(await queue.DequeueAsync(), Is.EqualTo(8));
-            Assert.That(await queue.DequeueAsync(), Is.EqualTo(9));
-            Assert.That(await queue.DequeueAsync(), Is.EqualTo(10));
+            (await queue.DequeueAsync()).Should().Be(7);
+            (await queue.DequeueAsync()).Should().Be(8);
+            (await queue.DequeueAsync()).Should().Be(9);
+            (await queue.DequeueAsync()).Should().Be(10);
         }
 
-        [Test]
+        [Fact]
         public void TestQueueGrowth()
         {
             var queue = new AsyncPriorityQueue<int>();
@@ -49,10 +49,10 @@ namespace Asynchrony.Collections
                 queue.TryEnqueue(i);
             }
 
-            Assert.That(queue.Capacity, Is.GreaterThan(initialCapacity));
+            queue.Capacity.Should().BeGreaterThan(initialCapacity);
         }
 
-        [Test]
+        [Fact]
         public void TestQueueShrinking()
         {
             var queue = new AsyncPriorityQueue<int>();
@@ -63,30 +63,30 @@ namespace Asynchrony.Collections
                 queue.TryEnqueue(i);
             }
 
-            Assert.That(queue.Capacity, Is.GreaterThan(initialCapacity));
+            queue.Capacity.Should().BeGreaterThan(initialCapacity);
 
             while (!queue.IsEmpty)
             {
                 queue.DequeueNow();
             }
 
-            Assert.That(queue.Capacity, Is.EqualTo(initialCapacity));
+            queue.Capacity.Should().Be(initialCapacity);
         }
 
-        [Test, ExpectedException(typeof(ArgumentException))]
+        [Fact]
         public void TestComparableDetection()
         {
-            new AsyncPriorityQueue<object>();
+            Assert.Throws<ArgumentException>(() => new AsyncPriorityQueue<object>());
         }
 
-        [Test]
+        [Fact]
         public void TestNonComparableWithComparer()
         {
             var comparer = new Mock<IComparer<object>>().Object;
             new AsyncPriorityQueue<object>(comparer: comparer);
         }
 
-        [Test]
+        [Fact]
         public async Task TestComparerUsage()
         {
             var comparer = new ReverseComparer<int>(Comparer<int>.Default);
@@ -97,13 +97,13 @@ namespace Asynchrony.Collections
             queue.TryEnqueue(9);
             queue.TryEnqueue(10);
 
-            Assert.That(await queue.DequeueAsync(), Is.EqualTo(10));
-            Assert.That(await queue.DequeueAsync(), Is.EqualTo(9));
-            Assert.That(await queue.DequeueAsync(), Is.EqualTo(8));
-            Assert.That(await queue.DequeueAsync(), Is.EqualTo(7));
+            (await queue.DequeueAsync()).Should().Be(10);
+            (await queue.DequeueAsync()).Should().Be(9);
+            (await queue.DequeueAsync()).Should().Be(8);
+            (await queue.DequeueAsync()).Should().Be(7);
         }
 
-        [Test]
+        [Fact]
         public async Task TestBoundedQueueDoesNotGrow()
         {
             var queue = new AsyncPriorityQueue<int>(3);
@@ -114,12 +114,12 @@ namespace Asynchrony.Collections
 
             var task = queue.EnqueueAsync(0);
 
-            Assert.That(task.IsCompleted, Is.False);
-            Assert.That(await queue.DequeueAsync(), Is.EqualTo(1));
+            task.IsCompleted.Should().BeFalse();
+            (await queue.DequeueAsync()).Should().Be(1);
 
             await task;
 
-            Assert.That(await queue.DequeueAsync(), Is.EqualTo(0));
+            (await queue.DequeueAsync()).Should().Be(0);
         }
 
         private class ReverseComparer<T> : IComparer<T>
