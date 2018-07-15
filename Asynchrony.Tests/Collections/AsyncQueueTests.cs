@@ -115,9 +115,13 @@ namespace Asynchrony.Collections
             var enqueueTask = Task.Run(() => queue.EnqueueAsync(2));
 
             var element = await queue.DequeueAsync();
-            await Task.Yield();
             element.Should().Be(1);
-            enqueueTask.IsCompleted.Should().BeTrue();
+
+            using (var cts = new CancellationTokenSource())
+            {
+                var task = await Task.WhenAny(enqueueTask, Task.Delay(TimeSpan.FromMilliseconds(5), cts.Token));
+                task.Should().Be(enqueueTask);
+            }
         }
 
         // TestBlockingDequeueWait -> AsyncQueueTestsThatRunOnMono
