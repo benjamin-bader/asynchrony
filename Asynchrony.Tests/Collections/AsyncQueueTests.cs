@@ -18,14 +18,14 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using NUnit.Framework;
+using FluentAssertions;
+using Xunit;
 
 namespace Asynchrony.Collections
 {
-    [TestFixture]
     public class AsyncQueueTests
     {
-        [Test]
+        [Fact]
         public async Task TestBlockingDequeue()
         {
             var queue = new AsyncQueue<int>();
@@ -36,60 +36,60 @@ namespace Asynchrony.Collections
 
             await queue.EnqueueAsync(2);
 
-            Assert.That(get.IsCompleted, Is.False); // getter was enqueued for execution
+            get.IsCompleted.Should().BeFalse(); // getter was enqueued for execution
 
             await Task.Yield();
 
-            Assert.That(get.Result, Is.EqualTo(2));
+            get.Result.Should().Be(2);
         }
 
-        [Test]
+        [Fact]
         public async Task TestBlockingEnqueue()
         {
             var queue = new AsyncQueue<int>();
             await queue.EnqueueAsync(10);
 
             int result;
-            Assert.That(queue.TryDequeue(out result), Is.True);
-            Assert.That(result, Is.EqualTo(10));
+            queue.TryDequeue(out result).Should().BeTrue();
+            result.Should().Be(10);
         }
 
-        [Test]
+        [Fact]
         public void TestBoundedQueue()
         {
             var queue = new AsyncQueue<int>(2);
-            Assert.That(queue.TryEnqueue(1));
-            Assert.That(queue.TryEnqueue(2));
-            Assert.That(queue.TryEnqueue(3), Is.False);
+            Assert.True(queue.TryEnqueue(1));
+            Assert.True(queue.TryEnqueue(2));
+            Assert.False(queue.TryEnqueue(3));
         }
 
-        [Test]
+        [Fact]
         public async Task TestIsEmpty()
         {
             var queue = new AsyncQueue<string>();
-            Assert.That(queue.IsEmpty);
+            Assert.True(queue.IsEmpty);
             
             await queue.EnqueueAsync("foo");
-            Assert.That(queue.IsEmpty, Is.False);
+            Assert.False(queue.IsEmpty);
             
             await queue.DequeueAsync();
-            Assert.That(queue.IsEmpty);
+            Assert.True(queue.IsEmpty);
         }
 
-        [Test]
+        [Fact]
         public async Task TestIsFull()
         {
             var queue = new AsyncQueue<int>(1);
-            Assert.That(queue.IsFull, Is.False);
+            Assert.False(queue.IsFull);
 
             await queue.EnqueueAsync(5);
-            Assert.That(queue.IsFull, Is.True);
+            Assert.True(queue.IsFull);
 
             await queue.DequeueAsync();
-            Assert.That(queue.IsFull, Is.False);
+            Assert.False(queue.IsFull);
         }
 
-        [Test]
+        [Fact]
         public async Task TestQueueOrder()
         {
             var queue = new AsyncQueue<int>();
@@ -97,16 +97,16 @@ namespace Asynchrony.Collections
             queue.TryEnqueue(3);
             queue.TryEnqueue(2);
 
-            Assert.That(await queue.DequeueAsync(), Is.EqualTo(1));
-            Assert.That(await queue.DequeueAsync(), Is.EqualTo(3));
-            Assert.That(await queue.DequeueAsync(), Is.EqualTo(2));
+            (await queue.DequeueAsync()).Should().Be(1);
+            (await queue.DequeueAsync()).Should().Be(3);
+            (await queue.DequeueAsync()).Should().Be(2);
         }
 
         //
         // Dequeue tests
         //
 
-        [Test]
+        [Fact]
         public async Task TestBlockingDequeueWithPendingEnqueues()
         {
             var queue = new AsyncQueue<int>(1);
@@ -116,51 +116,54 @@ namespace Asynchrony.Collections
 
             var element = await queue.DequeueAsync();
             await Task.Yield();
-            Assert.That(element, Is.EqualTo(1));
-            Assert.That(enqueueTask.IsCompleted);
+            element.Should().Be(1);
+            enqueueTask.IsCompleted.Should().BeTrue();
         }
 
         // TestBlockingDequeueWait -> AsyncQueueTestsThatRunOnMono
 
-        [Test]
+        [Fact]
         public void TestTryDequeue()
         {
             var queue = new AsyncQueue<int>();
             queue.TryEnqueue(1);
 
             int result;
-            Assert.That(queue.TryDequeue(out result), Is.True);
-            Assert.That(result, Is.EqualTo(1));
+            queue.TryDequeue(out result).Should().BeTrue();
+            result.Should().Be(1);
         }
 
-        [Test]
+        [Fact]
         public void TestTryDequeueWhenEmpty()
         {
             var queue = new AsyncQueue<int>();
 
             int result;
-            Assert.That(queue.TryDequeue(out result), Is.False);
+            Assert.False(queue.TryDequeue(out result));
         }
 
-        [Test]
+        [Fact]
         public void TestDequeueNowWhenQueueHasItems()
         {
             var queue = new AsyncQueue<int>();
             queue.TryEnqueue(2);
-            Assert.That(queue.DequeueNow(), Is.EqualTo(2));
+            queue.DequeueNow().Should().Be(2);
         }
 
-        [Test, ExpectedException(typeof(InvalidOperationException))]
+        [Fact]
         public void TestDequeueNowWhenQueueIsEmpty()
         {
-            new AsyncQueue<int>().DequeueNow();
+            new AsyncQueue<int>()
+                .Invoking(it => it.DequeueNow())
+                .Should()
+                .Throw<InvalidOperationException>();
         }
 
         //
         // Enqueue tests
         //
 
-        [Test]
+        [Fact]
         public async Task TestBlockingEnqueueWhenFull()
         {
             var queue = new AsyncQueue<int>(1);
@@ -170,33 +173,33 @@ namespace Asynchrony.Collections
             // wait a moment
             await Task.Yield();
 
-            Assert.That(setter.IsCompleted, Is.False);
+            Assert.False(setter.IsCompleted);
 
             int result;
             queue.TryDequeue(out result);
 
             await Task.Yield();
 
-            Assert.That(queue.TryDequeue(out result), Is.True);
-            Assert.That(result, Is.EqualTo(2));
+            Assert.True(queue.TryDequeue(out result));
+            result.Should().Be(2);
         }
 
         //TestBlockingEnqueueWait() -> AsyncQueueTestsThatRunOnMono
 
-        [Test]
+        [Fact]
         public async Task TestTryEnqueue()
         {
             var queue = new AsyncQueue<int>();
             queue.TryEnqueue(3);
-            Assert.That(await queue.DequeueAsync(), Is.EqualTo(3));
+            (await queue.DequeueAsync()).Should().Be(3);
         }
 
-        [Test]
+        [Fact]
         public void TestTryEnqueueWhenFull()
         {
             var queue = new AsyncQueue<int>(1);
             queue.TryEnqueue(2);
-            Assert.That(queue.TryEnqueue(3), Is.False);
+            Assert.False(queue.TryEnqueue(3));
         }
     }
 }
