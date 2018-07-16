@@ -21,7 +21,7 @@ namespace Asynchrony
 
         public AsyncQueueTestsThatRunOnMono()
         {
-            queue = new AsyncQueue<int>();
+            queue = new AsyncQueue<int>(1);
             started = new TaskCompletionSource<bool>();
             finished = false;
         }
