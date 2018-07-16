@@ -205,5 +205,41 @@ namespace Asynchrony.Collections
             queue.TryEnqueue(2);
             Assert.False(queue.TryEnqueue(3));
         }
+
+        [Fact]
+        public async Task TestLotsOfOperations()
+        {
+            var queue = new AsyncQueue<int>(64);
+
+            var enqueues = new List<Task>();
+            var dequeues = new List<Task>();
+
+            for (var i = 0; i < 500; ++i)
+            {
+                int x = i; // don't capture the iterating variable
+                enqueues.Add(Task.Run(async () => await queue.EnqueueAsync(x)));
+                dequeues.Add(Task.Run(async () => await queue.DequeueAsync()));
+            }
+
+            List<Task> allTasks = new List<Task>(1000);
+            allTasks.AddRange(enqueues);
+            allTasks.AddRange(dequeues);
+
+            var allDone = Task.WhenAll(allTasks);
+
+            using (var cts = new CancellationTokenSource())
+            {
+                if (allDone == await Task.WhenAny(allDone, Task.Delay(10, cts.Token)))
+                {
+                    // We finished!
+                }
+                else
+                {
+                    Assert.True(false, "Timed out");
+                }
+            }
+
+            queue.Count.Should().Be(0);
+        }
     }
 }
